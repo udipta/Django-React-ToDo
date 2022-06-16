@@ -1,11 +1,19 @@
 from django.db import transaction
 from rest_framework import status, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 # Create your views here.
+from user_auth.authentication import UserTokenAuthentication
 from .models import Task
+from .pagination import CustomPageNumberPagination
 from .serializers import TaskSerializer
+
+
+class TaskPagination(CustomPageNumberPagination):
+    page_size = 10
+    max_page_size = 50
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -24,9 +32,11 @@ class TaskViewSet(viewsets.ModelViewSet):
             list of Task validated_data for that specific user
     """
 
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (UserTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
     serializer_class = TaskSerializer
     queryset = Task.objects.all()
+    pagination_class = TaskPagination
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -40,8 +50,8 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data, many=False)
         if serializer.is_valid():
             # set author for Task
-            serializer.validated_data["author"] = request.user
-            serializer.save()
+            # serializer.validated_data["author"] = request.user
+            serializer.save(author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -69,7 +79,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
             Return a list of Task that is specific to the user
         """
-        data = self.get_queryset().filter(author=request.user).order_by('-created', '-modified')
+        data = Task.objects.filter(author=request.user).order_by('-id')
+
         serializer = self.get_serializer(data=data, many=True)
         serializer.is_valid()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # paginate response
+        paginated_queryset = self.paginate_queryset(serializer.data)
+        paginated_response = self.get_paginated_response(paginated_queryset)
+
+        return Response(paginated_response.data, status=status.HTTP_200_OK)

@@ -2,9 +2,9 @@ from rest_framework.routers import DefaultRouter
 
 from .views import TaskViewSet
 
-router = DefaultRouter(trailing_slash=False)
+router = DefaultRouter()
 
 # register the drf viewsets
-router.register('', TaskViewSet, basename='/')
+router.register('', TaskViewSet, basename='tasks')
 
 urlpatterns = router.urls
