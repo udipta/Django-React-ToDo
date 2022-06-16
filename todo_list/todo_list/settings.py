@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-b%)9*_xa29@)1yuedm9a$s*s=m*h=!x_$6l2d3^7$v!#@z@c_0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -82,8 +82,12 @@ WSGI_APPLICATION = 'todo_list.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': os.environ.get('POSTGRES_DB_HOST'),
+        'PORT': '5432',
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
     }
 }
 
@@ -121,6 +125,7 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
+STATICFILES_DIR = os.path.join(BASE_DIR, 'static/')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 # Default primary key field type
