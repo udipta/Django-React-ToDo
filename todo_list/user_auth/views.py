@@ -63,3 +63,17 @@ class AuthViewSet(viewsets.ModelViewSet):
         """
         logout(request)
         return Response("successfully logged out", status=status.HTTP_200_OK)
+
+
+def index(request):
+    context = {}
+    return render(request, "index.html", context=context)
+
+
+def login_view(request):
+    context = {}
+    return render(request, "login.html", context=context)
+
+def signup_view(request):
+    context = {}
+    return render(request, "signup.html", context=context)
