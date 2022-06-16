@@ -1,4 +1,6 @@
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
+from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -35,21 +37,20 @@ class AuthViewSet(viewsets.ModelViewSet):
     def login(self, request):
         serializer = self.get_serializer(data=request.data, many=False)
         if serializer.is_valid():
-            # get user from serializer data
-            user = serializer.validated_data.get("user")
-            if user and user.is_active:
-                # call Django login method
-                login(request, user)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+            # call Django login method
+            login(request, User.objects.get(id=serializer.data.get('id')))
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['POST', ], detail=False, name='signup')
     def signup(self, request):
         serializer = self.get_serializer(data=request.data, many=False)
         if serializer.is_valid():
-            # get user from serializer data
-            user = serializer.validated_data.get("user")
+            # get user object from serializer
+            user = serializer.save()
             if user:
+                # call Django authenticate method
+                authenticate(request, username=user.username, password=user.password)
                 # call Django login method
                 login(request, user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)

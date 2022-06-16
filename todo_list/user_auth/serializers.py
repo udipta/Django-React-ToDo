@@ -3,6 +3,9 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import AuthenticationFailed
+
+from .tokens import get_token_for_user
 
 
 class NullSerializer(serializers.ModelSerializer):
@@ -17,8 +20,22 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'is_active', 'password']
 
 
+# JWT Token Serializer
+class AuthTokenSerializer(UserSerializer):
+    auth_token = serializers.SerializerMethodField()
+
+    def get_auth_token(self, instance):
+        """
+            generate JWT token for user
+        """
+        return get_token_for_user(instance)
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['auth_token']
+
+
 # Login Serializer
-class LoginSerializer(UserSerializer):
+class LoginSerializer(AuthTokenSerializer):
     username = serializers.CharField(max_length=255)
     password = serializers.CharField(
         label=_("Password"),
@@ -38,7 +55,6 @@ class LoginSerializer(UserSerializer):
         if username and password:
             # password validation
             validate_password(password)
-
             # authentication validation
             user = authenticate(
                 request=self.context.get("request"),
@@ -46,21 +62,20 @@ class LoginSerializer(UserSerializer):
                 password=password,
             )
             if not user:
-                msg = _("Unable to log in with provided credentials.")
-                raise serializers.ValidationError(msg, code="authorization")
+                raise AuthenticationFailed("Unable to log in with provided credentials.")
+            if not user.is_active:
+                raise AuthenticationFailed("Account disabled, contact admin")
         else:
-            msg = _('Must include "username" and "password".')
-            raise serializers.ValidationError(msg, code="authorization")
-        validated_data["user"] = user
+            raise AuthenticationFailed('Must include "username" and "password".')
 
-        return validated_data
+        return user
 
-    class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields
+    class Meta(AuthTokenSerializer.Meta):
+        fields = AuthTokenSerializer.Meta.fields
 
 
 # Signup Serializer
-class SignupSerializer(UserSerializer):
+class SignupSerializer(AuthTokenSerializer):
     username = serializers.CharField(max_length=255)
     password = serializers.CharField(
         label=_("Password"),
@@ -77,36 +92,27 @@ class SignupSerializer(UserSerializer):
         write_only=True,
     )
 
-    def validate(self, data):
+    def validate(self, validated_data):
         """
             validate username & password for sign-up
         """
-        username = data.get("username", "")
-        password = data.get("password", "")
-        confirm_password = data.get("confirm_password", "")
+        username = validated_data.get("username", "")
+        password = validated_data.get("password", "")
+        confirm_password = validated_data.get("confirm_password", "")
 
         # password confirmation check
         if password != confirm_password:
-            msg = _("Passwords didn't match")
-            raise serializers.ValidationError(msg, code="authorization")
+            raise AuthenticationFailed("Passwords didn't match")
 
         # username uniqueness check
         if User.objects.filter(username=username).exists():
-            msg = _(f"{username} User already exists")
-            raise serializers.ValidationError(msg, code="authorization")
+            raise AuthenticationFailed(f"{username} User already exists")
 
         validate_password(password)
+        validated_data.pop("confirm_password", "")
+        return validated_data
 
-        User.objects.create_user(username=username, password=password)
-        user = authenticate(
-            request=self.context.get("request"),
-            username=username,
-            password=password,
-        )
 
-        data["user"] = user
-        return data
-
-    class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['confirm_password']
-        read_only_fields = UserSerializer.Meta.read_only_fields + ['confirm_password']
+    class Meta(AuthTokenSerializer.Meta):
+        fields = AuthTokenSerializer.Meta.fields + ['confirm_password']
+        read_only_fields = AuthTokenSerializer.Meta.read_only_fields + ['confirm_password']

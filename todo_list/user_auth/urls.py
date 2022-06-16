@@ -2,9 +2,9 @@ from rest_framework.routers import DefaultRouter
 
 from .views import AuthViewSet
 
-router = DefaultRouter(trailing_slash=False)
+router = DefaultRouter()
 
 # register the drf viewsets
-router.register('auth', AuthViewSet, basename='auth')
+router.register('', AuthViewSet, basename='auth')
 
 urlpatterns = router.urls
