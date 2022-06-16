@@ -9,7 +9,7 @@ def get_token_for_user(user: User = None, scope: str = "authentication"):
         Generate a new signed token containing for a specified user & scope
     """
     data = {
-        "user_%s_id" % scope: str(user.id),
+        "user_%s_id" % scope: str(user.pk),
     }
     return jwt.encode(data, settings.SECRET_KEY)
 

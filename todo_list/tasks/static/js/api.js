@@ -194,7 +194,6 @@ const delete_task_api = async (taskId) => {
 		window.location = "/login";
 		return [];
 	}
-  console.log(response.status);
   if (response.status === 204 ) {
 	  console.log("success");
 	  window.location = "/";

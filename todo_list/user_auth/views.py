@@ -49,6 +49,9 @@ class AuthViewSet(viewsets.ModelViewSet):
             # get user object from serializer
             user = serializer.save()
             if user:
+                # set password to the user
+                user.set_password(user.password)
+                user.save()
                 # call Django authenticate method
                 authenticate(request, username=user.username, password=user.password)
                 # call Django login method

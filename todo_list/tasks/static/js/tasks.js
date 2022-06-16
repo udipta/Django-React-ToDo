@@ -150,7 +150,7 @@ function App() {
 			<div style={{maxWidth: "800px", margin: "auto", marginTop: "1em", marginBottom: "1em",
 				padding: "1em"}} className="shadow">
 				<div style={{display: "flex", flexDirection: "row"}}>
-					<span>Super Tasks App</span>
+					<span>ToDo Tasks App</span>
 					<a className="btn btn-light" style={{marginLeft: "auto"}} onClick={logout}>Logout</a>
 				</div>
 			</div>
@@ -178,7 +178,7 @@ function App() {
 					</nav>}
 					<a className="btn btn-light" style={{marginLeft: "auto"}}
 					   onClick={newTask}
-					>New Sales Task</a>
+					>Add New Task</a>
 				</div>
 				<table className="table table-hover caption-top">
 					<thead className="table-light">

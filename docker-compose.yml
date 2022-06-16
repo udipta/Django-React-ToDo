@@ -10,7 +10,7 @@ services:
     ports:
       - "5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data:rw
 
   nginx:
     build: ./nginx
@@ -41,4 +41,6 @@ services:
 
 volumes:
   pgdata:
+    driver: local
   todo_list_data:
+    driver: local
