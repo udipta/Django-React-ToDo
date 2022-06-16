@@ -12,10 +12,15 @@ class TaskSerializer(serializers.ModelSerializer):
         """
 
         instance.title = validated_data.get('title', instance.title)
-        instance.is_done = validated_data.get('is_done', instance.is_done)
+        instance.status = validated_data.get('status', instance.status)
         instance.save()
 
         return instance
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['created'] = instance.created.isoformat()
+        return representation
 
     class Meta:
         model = Task
